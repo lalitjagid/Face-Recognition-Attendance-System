@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Attendance | Face Attendance System</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #f4f7fb,
+                    #eaf1f9
+                );
+
+            color: #1f2937;
+        }
+
+
+        /* ================= HEADER ================= */
+
+        .header {
+            background:
+                linear-gradient(
+                    135deg,
+                    #0066ff,
+                    #0047b3
+                );
+
+            color: white;
+
+            padding: 16px 35px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            box-shadow:
+                0 5px 18px
+                rgba(0, 65, 170, 0.22);
+        }
+
+
+        .header-left {
+            display: flex;
+
+            align-items: center;
+
+            gap: 13px;
+        }
+
+
+        .camera-icon {
+            width: 48px;
+
+            height: 48px;
+
+            background:
+                rgba(255,255,255,0.15);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.25);
+
+            border-radius: 13px;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            font-size: 24px;
+        }
+
+
+        .header h1 {
+            font-size: 20px;
+
+            font-weight: 700;
+
+            margin-bottom: 3px;
+        }
+
+
+        .header p {
+            font-size: 12px;
+
+            opacity: 0.85;
+        }
+
+
+        .logout {
+            background: #dc3545;
+
+            color: white;
+
+            padding: 10px 18px;
+
+            border-radius: 8px;
+
+            text-decoration: none;
+
+            font-weight: 600;
+
+            transition: 0.25s;
+
+            box-shadow:
+                0 4px 10px
+                rgba(0,0,0,0.15);
+        }
+
+
+        .logout:hover {
+            background: #bb2d3b;
+
+            transform: translateY(-1px);
+        }
+
+
+        /* ================= MAIN ================= */
+
+        .container {
+            width: 94%;
+
+            max-width: 1250px;
+
+            margin: 42px auto;
+        }
+
+
+        /* ================= PAGE TITLE ================= */
+
+        .page-title {
+            text-align: center;
+
+            margin-bottom: 30px;
+        }
+
+
+        .title-icon {
+            width: 65px;
+
+            height: 65px;
+
+            margin: 0 auto 13px;
+
+            border-radius: 17px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0066ff,
+                    #0047b3
+                );
+
+            color: white;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            font-size: 30px;
+
+            box-shadow:
+                0 9px 22px
+                rgba(0,102,255,0.22);
+        }
+
+
+        .page-title h2 {
+            font-size: 30px;
+
+            color: #111827;
+
+            margin-bottom: 6px;
+        }
+
+
+        .page-title p {
+            font-size: 14px;
+
+            color: #6b7280;
+        }
+
+
+        /* ================= FILTER CARD ================= */
+
+        .filter-box {
+            background:
+                rgba(255,255,255,0.97);
+
+            padding: 22px;
+
+            border-radius: 16px;
+
+            border:
+                1px solid #e2e8f0;
+
+            box-shadow:
+                0 10px 30px
+                rgba(15,23,42,0.08);
+
+            margin-bottom: 22px;
+        }
+
+
+        .filter-row {
+            display: flex;
+
+            align-items: flex-end;
+
+            gap: 15px;
+
+            flex-wrap: wrap;
+        }
+
+
+        .filter-group {
+            flex: 1;
+
+            min-width: 220px;
+        }
+
+
+        .filter-group label {
+            display: block;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            color: #374151;
+
+            margin-bottom: 8px;
+        }
+
+
+        .filter-group input {
+            width: 100%;
+
+            padding: 12px 14px;
+
+            border:
+                1px solid #d1d5db;
+
+            border-radius: 9px;
+
+            font-size: 14px;
+
+            outline: none;
+
+            color: #111827;
+
+            background: white;
+
+            transition: 0.25s;
+        }
+
+
+        .filter-group input:focus {
+            border-color: #0066ff;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(0,102,255,0.10);
+        }
+
+
+        /* ================= SEARCH ================= */
+
+        .search-group {
+            flex: 2;
+
+            min-width: 280px;
+        }
+
+
+        .search-wrapper {
+            position: relative;
+        }
+
+
+        .search-icon {
+            position: absolute;
+
+            left: 14px;
+
+            top: 50%;
+
+            transform:
+                translateY(-50%);
+
+            font-size: 17px;
+
+            color: #64748b;
+
+            pointer-events: none;
+        }
+
+
+        .search-wrapper input {
+            padding-left: 42px;
+        }
+
+
+        /* ================= BUTTONS ================= */
+
+        .filter-btn {
+            border: none;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0066ff,
+                    #0047b3
+                );
+
+            color: white;
+
+            padding: 12px 20px;
+
+            border-radius: 9px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition: 0.25s;
+
+            white-space: nowrap;
+        }
+
+
+        .filter-btn:hover {
+            transform: translateY(-1px);
+
+            box-shadow:
+                0 7px 16px
+                rgba(0,102,255,0.22);
+        }
+
+
+        .export-btn {
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 6px;
+
+            background: #111827;
+
+            color: white;
+
+            text-decoration: none;
+
+            padding: 12px 20px;
+
+            border-radius: 9px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            transition: 0.25s;
+
+            white-space: nowrap;
+        }
+
+
+        .export-btn:hover {
+            background: #000000;
+
+            transform: translateY(-1px);
+        }
+
+
+        /* ================= TABLE ================= */
+
+        .table-box {
+            background:
+                rgba(255,255,255,0.97);
+
+            padding: 20px;
+
+            border-radius: 16px;
+
+            border:
+                1px solid #e2e8f0;
+
+            box-shadow:
+                0 10px 30px
+                rgba(15,23,42,0.08);
+
+            overflow-x: auto;
+        }
+
+
+        table {
+            width: 100%;
+
+            min-width: 750px;
+
+            border-collapse: separate;
+
+            border-spacing: 0;
+        }
+
+
+        th {
+            background:
+                linear-gradient(
+                    135deg,
+                    #0066ff,
+                    #0052cc
+                );
+
+            color: white;
+
+            padding: 15px;
+
+            text-align: left;
+
+            font-size: 14px;
+
+            font-weight: 600;
+        }
+
+
+        th:first-child {
+            border-radius: 9px 0 0 0;
+        }
+
+
+        th:last-child {
+            border-radius: 0 9px 0 0;
+        }
+
+
+        td {
+            padding: 15px;
+
+            border-bottom:
+                1px solid #e5e7eb;
+
+            font-size: 14px;
+
+            color: #000000;
+
+            background: white;
+        }
+
+
+        tbody tr {
+            transition: 0.2s;
+        }
+
+
+        tbody tr:hover td {
+            background: #f7faff;
+        }
+
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+
+        /* ================= STATUS ================= */
+
+        .status-badge {
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 7px 14px;
+
+            border-radius: 20px;
+
+            background: #d1e7dd;
+
+            color: #000000;
+
+            font-weight: 700;
+
+            font-size: 13px;
+        }
+
+
+        /* ================= EMPTY ================= */
+
+        .no-record {
+            text-align: center;
+
+            padding: 50px 20px;
+
+            color: #64748b;
+
+            font-size: 15px;
+        }
+
+
+        .empty-icon {
+            display: block;
+
+            font-size: 38px;
+
+            margin-bottom: 10px;
+        }
+
+
+        /* ================= BACK ================= */
+
+        .bottom-buttons {
+            margin-top: 25px;
+
+            display: flex;
+
+            justify-content: center;
+        }
+
+
+        .back-btn {
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 7px;
+
+            background: #111827;
+
+            color: white;
+
+            padding: 12px 22px;
+
+            border-radius: 9px;
+
+            text-decoration: none;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            transition: 0.25s;
+
+            box-shadow:
+                0 5px 12px
+                rgba(0,0,0,0.12);
+        }
+
+
+        .back-btn:hover {
+            background: #000000;
+
+            transform: translateY(-1px);
+        }
+
+
+        /* ================= RESPONSIVE ================= */
+
+        @media (max-width: 768px) {
+
+            .header {
+                padding: 14px 18px;
+            }
+
+            .header h1 {
+                font-size: 16px;
+            }
+
+            .header p {
+                font-size: 10px;
+            }
+
+            .camera-icon {
+                width: 40px;
+
+                height: 40px;
+
+                font-size: 20px;
+            }
+
+            .logout {
+                padding: 8px 13px;
+
+                font-size: 13px;
+            }
+
+            .container {
+                width: 94%;
+
+                margin-top: 28px;
+            }
+
+            .page-title h2 {
+                font-size: 25px;
+            }
+
+            .page-title p {
+                font-size: 13px;
+            }
+
+            .filter-box {
+                padding: 16px;
+            }
+
+            .table-box {
+                padding: 12px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- ================= HEADER ================= -->
+
+<div class="header">
+
+    <div class="header-left">
+
+        <div class="camera-icon">
+            📷
+        </div>
+
+        <div>
+
+            <h1>
+                Face Attendance System
+            </h1>
+
+            <p>
+                Admin Management Panel
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <a
+        href="/logout"
+        class="logout">
+
+        Logout
+
+    </a>
+
+</div>
+
+
+
+<!-- ================= MAIN ================= -->
+
+<div class="container">
+
+
+    <!-- PAGE TITLE -->
+
+    <div class="page-title">
+
+        <div class="title-icon">
+            📊
+        </div>
+
+        <h2>
+            Attendance Records
+        </h2>
+
+        <p>
+            View and manage student attendance
+        </p>
+
+    </div>
+
+
+
+    <!-- ================= FILTER ================= -->
+
+    <div class="filter-box">
+
+        <div class="filter-row">
+
+
+            <!-- DATE -->
+
+            <div class="filter-group">
+
+                <label>
+                    📅 Select Date
+                </label>
+
+                <input
+                    type="date"
+                    id="dateFilter"
+                >
+
+            </div>
+
+
+            <!-- SEARCH -->
+
+            <div class="filter-group search-group">
+
+                <label>
+                    🔍 Search Attendance
+                </label>
+
+                <div class="search-wrapper">
+
+                    <span class="search-icon">
+                        🔎
+                    </span>
+
+                    <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="Search Student ID or Name..."
+                        onkeyup="searchAttendance()"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- EXPORT -->
+
+            <a
+                href="/export-attendance"
+                class="export-btn"
+                id="exportBtn"
+            >
+
+                📥 Export CSV
+
+            </a>
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================= TABLE ================= -->
+
+    <div class="table-box">
+
+        <table id="attendanceTable">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Student ID
+                    </th>
+
+                    <th>
+                        Student Name
+                    </th>
+
+                    <th>
+                        Date
+                    </th>
+
+                    <th>
+                        Time
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="attendanceBody">
+
+                {% for record in attendance %}
+
+                <tr>
+
+                    <td>
+                        {{ record[0] }}
+                    </td>
+
+                    <td>
+                        {{ record[1] }}
+                    </td>
+
+                    <td data-date="{{ record[2] }}">
+                        {{ record[2].split('-')[2] }}-{{ record[2].split('-')[1] }}-{{ record[2].split('-')[0] }}
+                    </td>
+
+                    <td>
+                        {{ record[3] }}
+                    </td>
+
+                    <td>
+
+                        <span class="status-badge">
+
+                            {{ record[4] }}
+
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="5"
+                        class="no-record"
+                    >
+
+                        <span class="empty-icon">
+                            📭
+                        </span>
+
+                        No attendance records found.
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+
+    <!-- ================= BACK ================= -->
+
+    <div class="bottom-buttons">
+
+        <a
+            href="/dashboard"
+            class="back-btn"
+        >
+
+            ← &nbsp; Back to Dashboard
+
+        </a>
+
+    </div>
+
+
+</div>
+
+
+
+<!-- ================= SCRIPT ================= -->
+
+<script>
+
+    /* ================= SEARCH + DATE FILTER ================= */
+
+    function filterAttendance() {
+
+        let searchInput =
+            document
+            .getElementById("searchInput")
+            .value
+            .toLowerCase()
+            .trim();
+
+        let selectedDate =
+            document
+            .getElementById("dateFilter")
+            .value;
+
+        let rows =
+            document
+            .getElementById("attendanceBody")
+            .getElementsByTagName("tr");
+
+        for (let i = 0; i < rows.length; i++) {
+
+            let cells =
+                rows[i].getElementsByTagName("td");
+
+            // Skip the "No attendance records" row.
+            if (cells.length < 5) {
+                continue;
+            }
+
+            let rowText =
+                rows[i]
+                .textContent
+                .toLowerCase();
+
+            let rowDate =
+                cells[2]
+                .getAttribute("data-date");
+
+            let matchesSearch =
+                searchInput === "" ||
+                rowText.includes(searchInput);
+
+            let matchesDate =
+                selectedDate === "" ||
+                rowDate === selectedDate;
+
+            if (matchesSearch && matchesDate) {
+                rows[i].style.display = "";
+            } else {
+                rows[i].style.display = "none";
+            }
+        }
+    }
+
+
+    document
+        .getElementById("searchInput")
+        .addEventListener("input", filterAttendance);
+
+
+    document
+        .getElementById("dateFilter")
+        .addEventListener("change", filterAttendance);
+
+
+    /* ================= EXPORT DATE ================= */
+
+
+
+    document
+        .getElementById("exportBtn")
+        .addEventListener("click", function () {
+
+            let selectedDate =
+                document
+                .getElementById("dateFilter")
+                .value;
+
+
+            if (selectedDate) {
+
+                this.href =
+                    "/export-attendance?date="
+                    + encodeURIComponent(selectedDate);
+
+            } else {
+
+                this.href =
+                    "/export-attendance";
+
+            }
+
+        });
+
+</script>
+
+
+</body>
+
+</html>

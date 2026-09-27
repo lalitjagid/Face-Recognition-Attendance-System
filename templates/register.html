@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Register Student | Face Attendance System</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --blue: #1769e8;
+            --blue-dark: #0b4fc9;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #dbe3ef;
+            --green: #16a34a;
+            --red: #dc2626;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "Segoe UI", Arial, sans-serif;
+
+            background:
+                radial-gradient(
+                    circle at 10% 10%,
+                    rgba(37, 99, 235, 0.12),
+                    transparent 28%
+                ),
+                radial-gradient(
+                    circle at 90% 90%,
+                    rgba(14, 165, 233, 0.10),
+                    transparent 30%
+                ),
+                linear-gradient(
+                    135deg,
+                    #eef5ff 0%,
+                    #f8fafc 50%,
+                    #eaf2ff 100%
+                );
+
+            color: var(--text);
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 35px 15px;
+        }
+
+
+        /* ================= MAIN CARD ================= */
+
+        .container {
+
+            width: 470px;
+            max-width: 100%;
+
+            background: rgba(255,255,255,0.96);
+
+            border: 1px solid rgba(255,255,255,0.9);
+
+            border-radius: 25px;
+
+            padding: 34px;
+
+            box-shadow:
+                0 25px 65px rgba(15,23,42,0.14);
+
+            position: relative;
+
+            overflow: hidden;
+        }
+
+
+        .container::before {
+
+            content: "";
+
+            position: absolute;
+
+            width: 220px;
+            height: 220px;
+
+            border-radius: 50%;
+
+            background: rgba(37,99,235,0.07);
+
+            top: -120px;
+            right: -80px;
+        }
+
+
+        /* ================= ICON ================= */
+
+        .icon-box {
+
+            width: 72px;
+            height: 72px;
+
+            margin: 0 auto 15px;
+
+            border-radius: 20px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 36px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #e8f1ff,
+                    #f3f8ff
+                );
+
+            border: 1px solid #dbeafe;
+
+            box-shadow:
+                0 10px 25px rgba(37,99,235,0.12);
+
+            position: relative;
+            z-index: 1;
+        }
+
+
+        /* ================= TITLE ================= */
+
+        h1 {
+
+            text-align: center;
+
+            font-size: 30px;
+
+            color: #0f172a;
+
+            letter-spacing: -0.6px;
+
+            position: relative;
+            z-index: 1;
+        }
+
+
+        .subtitle {
+
+            text-align: center;
+
+            color: var(--muted);
+
+            font-size: 14px;
+
+            margin-top: 7px;
+
+            margin-bottom: 26px;
+
+            position: relative;
+            z-index: 1;
+        }
+
+
+        /* ================= ERROR ================= */
+
+        .error {
+
+            background: #fef2f2;
+
+            color: var(--red);
+
+            border: 1px solid #fecaca;
+
+            padding: 12px 14px;
+
+            border-radius: 11px;
+
+            text-align: center;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            margin-bottom: 18px;
+        }
+
+
+        /* ================= FORM ================= */
+
+        form {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 8px;
+
+            position: relative;
+
+            z-index: 1;
+        }
+
+
+        label {
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            color: #334155;
+
+            margin-top: 7px;
+        }
+
+
+        input,
+        select {
+
+            width: 100%;
+
+            padding: 13px 14px;
+
+            border: 1px solid var(--border);
+
+            border-radius: 11px;
+
+            background: #f8fafc;
+
+            color: #0f172a;
+
+            font-size: 14px;
+
+            outline: none;
+
+            transition: all 0.2s ease;
+        }
+
+
+        input::placeholder {
+
+            color: #94a3b8;
+        }
+
+
+        input:hover,
+        select:hover {
+
+            border-color: #b8c7dc;
+
+            background: #ffffff;
+        }
+
+
+        input:focus,
+        select:focus {
+
+            border-color: var(--blue);
+
+            background: #ffffff;
+
+            box-shadow:
+                0 0 0 4px rgba(37,99,235,0.10);
+        }
+
+
+        /* ================= REGISTER BUTTON ================= */
+
+        button {
+
+            width: 100%;
+
+            margin-top: 17px;
+
+            padding: 14px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #1769e8,
+                    #0b4fc9
+                );
+
+            color: white;
+
+            font-size: 15px;
+
+            font-weight: 750;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 12px 25px rgba(37,99,235,0.23);
+
+            transition: all 0.2s ease;
+        }
+
+
+        button:hover {
+
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 16px 30px rgba(37,99,235,0.30);
+        }
+
+
+        button:active {
+
+            transform: translateY(0);
+        }
+
+
+        /* ================= BACK BUTTON ================= */
+
+        .back {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            width: 100%;
+
+            margin-top: 16px;
+
+            padding: 12px;
+
+            border-radius: 11px;
+
+            background: #202a36;
+
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 14px;
+
+            font-weight: 700;
+
+            box-shadow:
+                0 8px 18px rgba(15,23,42,0.14);
+
+            transition: all 0.2s ease;
+        }
+
+
+        .back:hover {
+
+            background: #111827;
+
+            transform: translateY(-1px);
+        }
+
+
+        /* ================= FOOTER ================= */
+
+        .footer-text {
+
+            text-align: center;
+
+            color: #94a3b8;
+
+            font-size: 11px;
+
+            margin-top: 19px;
+        }
+
+
+        /* ================= MOBILE ================= */
+
+        @media (max-width: 520px) {
+
+            body {
+                padding: 20px 12px;
+            }
+
+            .container {
+
+                padding: 25px 18px;
+
+                border-radius: 20px;
+            }
+
+            .icon-box {
+
+                width: 62px;
+                height: 62px;
+
+                font-size: 31px;
+            }
+
+            h1 {
+
+                font-size: 26px;
+            }
+
+            input,
+            select {
+
+                padding: 12px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- ICON -->
+
+    <div class="icon-box">
+
+        👨‍🎓
+
+    </div>
+
+
+    <!-- TITLE -->
+
+    <h1>
+        Register Student
+    </h1>
+
+
+    <p class="subtitle">
+        Add student details to the attendance system
+    </p>
+
+
+    <!-- ERROR -->
+
+    {% if error %}
+
+    <div class="error">
+
+        ❌ {{ error }}
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- FORM -->
+
+    <form method="POST">
+
+
+        <!-- STUDENT ID -->
+
+        <label>
+            Student ID
+        </label>
+
+        <input
+            type="text"
+            name="student_id"
+            placeholder="Enter Student ID"
+            required
+        >
+
+
+        <!-- NAME -->
+
+        <label>
+            Student Name
+        </label>
+
+        <input
+            type="text"
+            name="name"
+            placeholder="Enter Student Name"
+            required
+        >
+
+
+        <!-- ROLL NUMBER -->
+
+        <label>
+            Roll Number
+        </label>
+
+        <input
+            type="text"
+            name="roll_no"
+            placeholder="Enter Roll Number"
+            required
+        >
+
+
+        <!-- COURSE -->
+
+        <label>
+            Course
+        </label>
+
+        <select
+            name="course"
+            required
+        >
+
+            <option value="">
+                Select Course
+            </option>
+
+            <option value="BCA">
+                BCA
+            </option>
+
+            <option value="BBA">
+                BBA
+            </option>
+
+            <option value="BSc">
+                BSc
+            </option>
+
+            <option value="BA">
+                BA
+            </option>
+
+        </select>
+
+
+        <!-- REGISTER -->
+
+        <button type="submit">
+
+            ➕ Register Student
+
+        </button>
+
+
+    </form>
+
+
+    <!-- BACK -->
+
+    <a
+        href="/dashboard"
+        class="back"
+    >
+
+        ← Back to Dashboard
+
+    </a>
+
+
+    <div class="footer-text">
+
+        Face Recognition Attendance System
+
+    </div>
+
+
+</div>
+
+
+</body>
+
+</html>
