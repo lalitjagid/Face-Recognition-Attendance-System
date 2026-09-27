@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Take Attendance | Face Attendance System</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+:root{
+    --blue:#1769e8;
+    --blue2:#0b4fc9;
+    --text:#111827;
+    --muted:#64748b;
+    --green:#16a34a;
+    --red:#ef3348;
+}
+
+body{
+    min-height:100vh;
+    font-family:"Segoe UI",Arial,sans-serif;
+    color:var(--text);
+    background:
+        linear-gradient(135deg,#eef5ff 0%,#f8fafc 50%,#eaf2ff 100%);
+}
+
+/* HEADER */
+.header{
+    height:82px;
+    padding:0 5.5%;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    color:white;
+    background:linear-gradient(
+        105deg,
+        #0754d5,
+        #1672f3 55%,
+        #0751c7
+    );
+    box-shadow:0 8px 30px rgba(0,54,150,.20);
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.logo{
+    width:48px;
+    height:48px;
+    border-radius:15px;
+    display:grid;
+    place-items:center;
+    font-size:25px;
+    background:rgba(255,255,255,.15);
+    border:1px solid rgba(255,255,255,.28);
+    box-shadow:
+        inset 0 1px rgba(255,255,255,.25),
+        0 7px 18px rgba(0,0,0,.12);
+}
+
+.brand h1{
+    font-size:23px;
+    font-weight:750;
+    line-height:1.1;
+}
+
+.brand p{
+    font-size:13px;
+    margin-top:4px;
+    opacity:.85;
+}
+
+.logout{
+    color:white;
+    text-decoration:none;
+    background:#ef3348;
+    padding:12px 21px;
+    border-radius:11px;
+    font-size:14px;
+    font-weight:700;
+    box-shadow:0 7px 18px rgba(0,0,0,.15);
+    transition:.2s;
+}
+
+.logout:hover{
+    background:#d92b3e;
+    transform:translateY(-2px);
+}
+
+/* MAIN */
+.container{
+    width:min(1080px,92%);
+    margin:38px auto 55px;
+}
+
+.box{
+    position:relative;
+    overflow:hidden;
+    background:rgba(255,255,255,.94);
+    border:1px solid rgba(255,255,255,.9);
+    border-radius:26px;
+    padding:34px;
+    box-shadow:0 20px 60px rgba(15,23,42,.12);
+}
+
+.box:before{
+    content:"";
+    position:absolute;
+    width:260px;
+    height:260px;
+    border-radius:50%;
+    background:rgba(37,99,235,.07);
+    top:-150px;
+    right:-80px;
+    pointer-events:none;
+}
+
+/* TITLE */
+.title{
+    text-align:center;
+    position:relative;
+    margin-bottom:27px;
+}
+
+.badge{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 14px;
+    border-radius:50px;
+    background:#eff6ff;
+    color:#1559c7;
+    border:1px solid #dbeafe;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+    margin-bottom:12px;
+}
+
+.title h2{
+    font-size:38px;
+    letter-spacing:-1px;
+    color:#0f172a;
+}
+
+.title p{
+    margin-top:8px;
+    color:var(--muted);
+    font-size:15px;
+}
+
+/* CAMERA */
+.camera-wrap{
+    max-width:900px;
+    margin:auto;
+}
+
+.camera-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:0 3px 10px;
+    font-size:13px;
+    font-weight:700;
+    color:#334155;
+}
+
+.live{
+    color:#16a34a;
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+
+.live i{
+    width:8px;
+    height:8px;
+    background:#22c55e;
+    border-radius:50%;
+    display:block;
+    box-shadow:0 0 0 4px rgba(34,197,94,.13);
+}
+
+.camera-box{
+    position:relative;
+    padding:9px;
+    background:#030712;
+    border-radius:21px;
+    border:1px solid #1e293b;
+    box-shadow:0 22px 45px rgba(2,6,23,.23);
+    overflow:hidden;
+}
+
+.camera-box:before,
+.camera-box:after{
+    content:"";
+    position:absolute;
+    width:38px;
+    height:38px;
+    z-index:2;
+    pointer-events:none;
+}
+
+.camera-box:before{
+    top:20px;
+    left:20px;
+    border-top:3px solid #60a5fa;
+    border-left:3px solid #60a5fa;
+    border-radius:7px 0 0 0;
+}
+
+.camera-box:after{
+    right:20px;
+    bottom:20px;
+    border-right:3px solid #60a5fa;
+    border-bottom:3px solid #60a5fa;
+    border-radius:0 0 7px 0;
+}
+
+video{
+    display:block;
+    width:100%;
+    height:480px;
+    object-fit:cover;
+    background:#000;
+    border-radius:14px;
+}
+
+canvas{
+    display:none;
+}
+
+/* CONTROLS */
+.controls{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+    margin-top:23px;
+}
+
+.start{
+    border:0;
+    min-width:235px;
+    padding:14px 26px;
+    border-radius:13px;
+    background:linear-gradient(135deg,#19a653,#128344);
+    color:#fff;
+    font-size:15px;
+    font-weight:750;
+    cursor:pointer;
+    box-shadow:0 11px 25px rgba(22,163,74,.24);
+    transition:.2s;
+}
+
+.start:hover{
+    transform:translateY(-2px);
+    box-shadow:0 15px 28px rgba(22,163,74,.30);
+}
+
+#status{
+    min-height:21px;
+    text-align:center;
+    color:#64748b;
+    font-size:14px;
+    font-weight:600;
+}
+
+/* RESULT */
+#result{
+    display:none;
+    max-width:780px;
+    margin:20px auto 0;
+    padding:21px 23px;
+    border-radius:17px;
+    background:linear-gradient(135deg,#ecfdf5,#f7fff9);
+    border:1px solid #bbf7d0;
+    color:#166534;
+    box-shadow:0 10px 28px rgba(22,101,52,.09);
+}
+
+#studentName{
+    font-size:23px;
+    font-weight:800;
+    margin-bottom:8px;
+}
+
+#studentInfo{
+    font-size:14px;
+    color:#475569;
+    margin:5px 0;
+}
+
+#attendanceStatus{
+    font-size:17px;
+    margin-top:10px;
+}
+
+/* BACK */
+.footer-actions{
+    display:flex;
+    justify-content:center;
+    margin-top:25px;
+}
+
+.back{
+    min-width:220px;
+    text-align:center;
+    text-decoration:none;
+    color:white;
+    background:#202a36;
+    padding:13px 22px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:700;
+    box-shadow:0 8px 20px rgba(15,23,42,.16);
+    transition:.2s;
+}
+
+.back:hover{
+    background:#111827;
+    transform:translateY(-2px);
+}
+
+/* MOBILE */
+@media(max-width:700px){
+
+    .header{
+        height:72px;
+        padding:0 17px;
+    }
+
+    .logo{
+        width:40px;
+        height:40px;
+        font-size:21px;
+    }
+
+    .brand h1{
+        font-size:18px;
+    }
+
+    .brand p{
+        font-size:11px;
+    }
+
+    .logout{
+        padding:9px 12px;
+        font-size:12px;
+    }
+
+    .container{
+        width:94%;
+        margin:22px auto 35px;
+    }
+
+    .box{
+        padding:22px 15px;
+        border-radius:20px;
+    }
+
+    .title h2{
+        font-size:29px;
+    }
+
+    video{
+        height:280px;
+    }
+
+    .start,
+    .back{
+        width:100%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header class="header">
+
+    <div class="brand">
+
+        <div class="logo">
+            📷
+        </div>
+
+        <div>
+            <h1>Face Attendance System</h1>
+            <p>Admin Management Panel</p>
+        </div>
+
+    </div>
+
+    <a href="/logout" class="logout">
+        🚪 Logout
+    </a>
+
+</header>
+
+
+<!-- MAIN -->
+<main class="container">
+
+    <section class="box">
+
+        <div class="title">
+
+            <div class="badge">
+                ● Live Recognition
+            </div>
+
+            <h2>
+                Take Attendance
+            </h2>
+
+            <p>
+                Position your face inside the camera frame
+                for automatic recognition.
+            </p>
+
+        </div>
+
+
+        <div class="camera-wrap">
+
+            <div class="camera-top">
+
+                <span>
+                    Camera Preview
+                </span>
+
+                <span class="live">
+                    <i></i>
+                    Camera Ready
+                </span>
+
+            </div>
+
+
+            <!-- CAMERA -->
+            <div
+                class="camera-box"
+                id="cameraBox"
+            >
+
+                <video
+                    id="video"
+                    autoplay
+                    playsinline
+                ></video>
+
+            </div>
+
+
+            <canvas id="canvas"></canvas>
+
+
+            <!-- BUTTON -->
+            <div
+                class="controls"
+                id="buttonBox"
+            >
+
+                <button
+                    class="start"
+                    id="startButton"
+                    onclick="startCamera()"
+                >
+                    📷 Start Camera
+                </button>
+
+                <p id="status">
+                    Click Start Camera to begin.
+                </p>
+
+            </div>
+
+
+            <!-- RESULT -->
+            <div id="result">
+
+                <div id="studentName"></div>
+
+                <p id="studentInfo"></p>
+
+                <h2 id="attendanceStatus"></h2>
+
+            </div>
+
+
+            <!-- BACK -->
+            <div class="footer-actions">
+
+                <a
+                    href="/dashboard"
+                    class="back"
+                >
+                    ← Back to Dashboard
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<script>
+
+let video =
+    document.getElementById("video");
+
+let canvas =
+    document.getElementById("canvas");
+
+let statusText =
+    document.getElementById("status");
+
+let resultBox =
+    document.getElementById("result");
+
+let startButton =
+    document.getElementById("startButton");
+
+let cameraBox =
+    document.getElementById("cameraBox");
+
+let buttonBox =
+    document.getElementById("buttonBox");
+
+let stream = null;
+
+let checking = false;
+
+let recognized = false;
+
+
+/* =========================
+   START CAMERA
+========================= */
+
+async function startCamera(){
+
+    if(stream){
+        return;
+    }
+
+    try{
+
+        stream =
+            await navigator.mediaDevices
+            .getUserMedia({
+
+                video:{
+                    width:640,
+                    height:480
+                },
+
+                audio:false
+
+            });
+
+
+        video.srcObject = stream;
+
+        recognized = false;
+
+
+        statusText.innerText =
+            "📷 Camera started. Please look at the camera.";
+
+
+        setTimeout(function(){
+
+            if(!checking){
+                checkFace();
+            }
+
+        },1500);
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+        statusText.innerText =
+            "❌ Camera permission denied.";
+
+    }
+
+}
+
+
+/* =========================
+   CHECK FACE
+========================= */
+
+async function checkFace(){
+
+    if(!stream || recognized){
+        return;
+    }
+
+    checking = true;
+
+
+    canvas.width =
+        video.videoWidth;
+
+    canvas.height =
+        video.videoHeight;
+
+
+    if(
+        canvas.width === 0 ||
+        canvas.height === 0
+    ){
+
+        checking = false;
+
+        setTimeout(
+            checkFace,
+            1000
+        );
+
+        return;
+    }
+
+
+    let context =
+        canvas.getContext("2d");
+
+
+    context.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    canvas.toBlob(
+        async function(blob){
+
+            let formData =
+                new FormData();
+
+
+            formData.append(
+                "image",
+                blob,
+                "attendance.jpg"
+            );
+
+
+            try{
+
+                let response =
+                    await fetch(
+                        "/recognize-face",
+                        {
+                            method:"POST",
+                            body:formData
+                        }
+                    );
+
+
+                let data =
+                    await response.json();
+
+
+                console.log(data);
+
+
+                /* =========================
+                   FACE RECOGNIZED
+                ========================= */
+
+                if(data.recognized){
+
+                    recognized = true;
+
+
+                    resultBox.style.display =
+                        "block";
+
+
+                    document.getElementById(
+                        "studentName"
+                    ).innerText =
+                        "👤 " + data.name;
+
+
+                    document.getElementById(
+                        "studentInfo"
+                    ).innerText =
+                        "Student ID: " +
+                        data.student_id +
+                        " | Roll No: " +
+                        data.roll_no +
+                        " | Course: " +
+                        data.course;
+
+
+                    document.getElementById(
+                        "attendanceStatus"
+                    ).innerText =
+                        "✅ " + data.message;
+
+
+                    statusText.innerText =
+                        "✅ Face recognized successfully!";
+
+
+                    /* STOP CAMERA */
+
+                    if(stream){
+
+                        stream
+                        .getTracks()
+                        .forEach(
+                            track =>
+                            track.stop()
+                        );
+
+                        stream = null;
+                    }
+
+
+                    video.srcObject = null;
+
+
+                    /* HIDE CAMERA */
+
+                    cameraBox.style.display =
+                        "none";
+
+
+                    /* HIDE BUTTON */
+
+                    buttonBox.style.display =
+                        "none";
+
+                }
+
+
+                else{
+
+                    statusText.innerText =
+                        data.message ||
+                        "Face not recognized. Please look at camera.";
+
+                }
+
+            }
+
+            catch(error){
+
+                console.log(error);
+
+                statusText.innerText =
+                    "❌ Server error.";
+
+            }
+
+
+            checking = false;
+
+
+            /* CHECK AGAIN */
+
+            if(
+                !recognized &&
+                stream
+            ){
+
+                setTimeout(
+                    checkFace,
+                    1200
+                );
+
+            }
+
+        },
+
+        "image/jpeg",
+        0.85
+    );
+}
+
+</script>
+
+</body>
+</html>

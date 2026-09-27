@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Face Capture | Face Attendance System</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #f4f7fb,
+                    #eaf1f9
+                );
+
+            color: #1f2937;
+        }
+
+
+        /* ================= HEADER ================= */
+
+        .header {
+            background:
+                linear-gradient(
+                    135deg,
+                    #0066ff,
+                    #0047b3
+                );
+
+            color: white;
+
+            padding: 16px 35px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            box-shadow:
+                0 5px 18px
+                rgba(0,65,170,0.22);
+        }
+
+
+        .header-left {
+            display: flex;
+
+            align-items: center;
+
+            gap: 13px;
+        }
+
+
+        .camera-icon {
+            width: 48px;
+            height: 48px;
+
+            background:
+                rgba(255,255,255,0.15);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.25);
+
+            border-radius: 13px;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            font-size: 24px;
+        }
+
+
+        .header h1 {
+            font-size: 20px;
+
+            font-weight: 700;
+
+            margin-bottom: 3px;
+        }
+
+
+        .header p {
+            font-size: 12px;
+
+            opacity: 0.85;
+        }
+
+
+        .logout {
+            background: #dc3545;
+
+            color: white;
+
+            padding: 10px 18px;
+
+            border-radius: 8px;
+
+            text-decoration: none;
+
+            font-weight: 600;
+
+            transition: 0.25s;
+        }
+
+
+        .logout:hover {
+            background: #bb2d3b;
+
+            transform: translateY(-1px);
+        }
+
+
+        /* ================= MAIN ================= */
+
+        .container {
+            width: 94%;
+
+            max-width: 850px;
+
+            margin: 42px auto;
+        }
+
+
+        /* ================= CARD ================= */
+
+        .camera-box {
+            background:
+                rgba(255,255,255,0.97);
+
+            padding: 32px;
+
+            border-radius: 20px;
+
+            border:
+                1px solid #e2e8f0;
+
+            box-shadow:
+                0 14px 38px
+                rgba(15,23,42,0.10);
+
+            text-align: center;
+        }
+
+
+        /* ================= TITLE ================= */
+
+        .title-icon {
+            width: 68px;
+            height: 68px;
+
+            margin: 0 auto 14px;
+
+            border-radius: 17px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0066ff,
+                    #0047b3
+                );
+
+            color: white;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            font-size: 30px;
+
+            box-shadow:
+                0 9px 22px
+                rgba(0,102,255,0.22);
+        }
+
+
+        h1 {
+            font-size: 28px;
+
+            color: #111827;
+
+            margin-bottom: 7px;
+        }
+
+
+        .subtitle {
+            color: #6b7280;
+
+            font-size: 14px;
+
+            margin-bottom: 18px;
+        }
+
+
+        /* ================= STUDENT ID ================= */
+
+        .student-info {
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            padding: 9px 16px;
+
+            background: #eff6ff;
+
+            border:
+                1px solid #bfdbfe;
+
+            border-radius: 25px;
+
+            color: #1e40af;
+
+            font-size: 14px;
+
+            margin-bottom: 22px;
+        }
+
+
+        .student-info strong {
+            color: #111827;
+        }
+
+
+        /* ================= VIDEO ================= */
+
+        .video-container {
+            position: relative;
+
+            width: 100%;
+
+            max-width: 680px;
+
+            margin: 0 auto;
+
+            padding: 7px;
+
+            background: #111827;
+
+            border-radius: 16px;
+
+            box-shadow:
+                0 12px 28px
+                rgba(0,0,0,0.18);
+        }
+
+
+        video {
+            display: block;
+
+            width: 100%;
+
+            max-width: 680px;
+
+            aspect-ratio: 4 / 3;
+
+            object-fit: cover;
+
+            border-radius: 11px;
+
+            background: #000;
+        }
+
+
+        /* ================= CAMERA STATUS ================= */
+
+        .camera-status {
+            margin: 18px auto 0;
+
+            padding: 12px 16px;
+
+            max-width: 680px;
+
+            background: #f8fafc;
+
+            border:
+                1px solid #e2e8f0;
+
+            border-radius: 10px;
+
+            color: #475569;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+        }
+
+
+        /* ================= BUTTON ================= */
+
+        button {
+            margin-top: 20px;
+
+            padding: 13px 28px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #0066ff,
+                    #0047b3
+                );
+
+            color: white;
+
+            font-size: 15px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition: 0.25s;
+
+            box-shadow:
+                0 7px 17px
+                rgba(0,102,255,0.22);
+        }
+
+
+        button:hover {
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 10px 23px
+                rgba(0,102,255,0.28);
+        }
+
+
+        button:disabled {
+            background: #94a3b8;
+
+            cursor: not-allowed;
+
+            transform: none;
+
+            box-shadow: none;
+        }
+
+
+        /* ================= CAPTURE INFO ================= */
+
+        .capture-info {
+            display: flex;
+
+            justify-content: center;
+
+            gap: 12px;
+
+            margin-top: 22px;
+
+            flex-wrap: wrap;
+        }
+
+
+        .capture-step {
+            padding: 8px 14px;
+
+            border-radius: 20px;
+
+            background: #f1f5f9;
+
+            border:
+                1px solid #e2e8f0;
+
+            color: #64748b;
+
+            font-size: 12px;
+
+            font-weight: 600;
+        }
+
+
+        /* ================= BACK ================= */
+
+        .back {
+            display: inline-flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            gap: 7px;
+
+            margin-top: 20px;
+
+            padding: 11px 19px;
+
+            background: #111827;
+
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 9px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            transition: 0.25s;
+        }
+
+
+        .back:hover {
+            background: #000000;
+
+            transform: translateY(-1px);
+        }
+
+
+        /* ================= RESPONSIVE ================= */
+
+        @media (max-width: 768px) {
+
+            .header {
+                padding: 14px 18px;
+            }
+
+            .header h1 {
+                font-size: 16px;
+            }
+
+            .header p {
+                font-size: 10px;
+            }
+
+            .camera-icon {
+                width: 40px;
+                height: 40px;
+
+                font-size: 20px;
+            }
+
+            .logout {
+                padding: 8px 13px;
+
+                font-size: 13px;
+            }
+
+            .container {
+                width: 94%;
+
+                margin: 25px auto;
+            }
+
+            .camera-box {
+                padding: 23px 16px;
+
+                border-radius: 16px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .title-icon {
+                width: 60px;
+                height: 60px;
+
+                font-size: 27px;
+            }
+
+            video {
+                aspect-ratio: 4 / 3;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- ================= HEADER ================= -->
+
+<div class="header">
+
+    <div class="header-left">
+
+        <div class="camera-icon">
+            📷
+        </div>
+
+        <div>
+
+            <h1>
+                Face Attendance System
+            </h1>
+
+            <p>
+                Admin Management Panel
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <a
+        href="/logout"
+        class="logout">
+
+        Logout
+
+    </a>
+
+</div>
+
+
+
+<!-- ================= MAIN ================= -->
+
+<div class="container">
+
+
+    <div class="camera-box">
+
+
+        <!-- TITLE -->
+
+        <div class="title-icon">
+            📷
+        </div>
+
+
+        <h1>
+            Face Capture
+        </h1>
+
+
+        <p class="subtitle">
+            Capture student face for recognition
+        </p>
+
+
+        <!-- STUDENT ID -->
+
+        <div class="student-info">
+
+            🆔
+
+            <span>
+                Student ID:
+            </span>
+
+            <strong>
+                {{ student_id }}
+            </strong>
+
+        </div>
+
+
+        <!-- CAMERA -->
+
+        <div class="video-container">
+
+            <video
+                id="video"
+                autoplay
+                playsinline>
+            </video>
+
+        </div>
+
+
+        <!-- START -->
+
+        <button
+            id="startBtn"
+            onclick="startCamera()">
+
+            📷 &nbsp; Start Camera
+
+        </button>
+
+
+        <!-- STATUS -->
+
+        <div
+            id="status"
+            class="camera-status">
+
+            Click "Start Camera" to begin face capture.
+
+        </div>
+
+
+        <!-- CAPTURE INFO -->
+
+        <div class="capture-info">
+
+            <div class="capture-step">
+                📸 Photo 1/1
+            </div>
+
+        </div>
+
+
+        <!-- BACK -->
+
+        <a
+            href="/dashboard"
+            class="back">
+
+            ← &nbsp; Back to Dashboard
+
+        </a>
+
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+    const video =
+        document.getElementById("video");
+
+
+    const startBtn =
+        document.getElementById("startBtn");
+
+
+    const statusText =
+        document.getElementById("status");
+
+
+    const studentId =
+        "{{ student_id }}";
+
+
+    let stream = null;
+
+    let capturing = false;
+
+
+    // =========================
+    // START CAMERA
+    // =========================
+
+    async function startCamera() {
+
+        if (stream) {
+            return;
+        }
+
+
+        try {
+
+            stream =
+                await navigator.mediaDevices.getUserMedia({
+
+                    video: {
+                        width: 640,
+                        height: 480
+                    },
+
+                    audio: false
+
+                });
+
+
+            video.srcObject = stream;
+
+
+            startBtn.disabled = true;
+
+
+            statusText.innerText =
+                "Camera started... Face camera ki taraf rakhein.";
+
+
+            setTimeout(function() {
+
+                autoCapture();
+
+            }, 2000);
+
+
+        } catch (error) {
+
+            console.log(error);
+
+
+            statusText.innerText =
+                "❌ Camera permission denied. Please allow camera access.";
+
+        }
+
+    }
+
+
+
+    // =========================
+    // AUTOMATIC CAPTURE
+    // ONLY ONE PHOTO
+    // =========================
+
+    async function autoCapture() {
+
+        if (!stream || capturing) {
+            return;
+        }
+
+
+        capturing = true;
+
+
+        statusText.innerText =
+            "📸 Capturing photo 1/1...";
+
+
+        const canvas =
+            document.createElement("canvas");
+
+
+        canvas.width =
+            video.videoWidth;
+
+
+        canvas.height =
+            video.videoHeight;
+
+
+        const context =
+            canvas.getContext("2d");
+
+
+        context.drawImage(
+            video,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+        canvas.toBlob(async function(blob) {
+
+
+            const formData =
+                new FormData();
+
+
+            formData.append(
+                "student_id",
+                studentId
+            );
+
+
+            formData.append(
+                "image",
+                blob,
+                `User.${studentId}.1.jpg`
+            );
+
+
+            try {
+
+
+                const response =
+                    await fetch(
+                        "/save-face",
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+
+                const result =
+                    await response.json();
+
+
+                if (result.success) {
+
+
+                    statusText.innerText =
+                        "✅ Photo 1/1 saved successfully.";
+
+
+                    stopCamera();
+
+
+                    setTimeout(function() {
+
+                        window.location.href =
+                            "/dashboard";
+
+                    }, 1500);
+
+
+                } else {
+
+
+                    statusText.innerText =
+                        "❌ " +
+                        result.message;
+
+
+                    capturing = false;
+
+                }
+
+
+            } catch (error) {
+
+
+                console.log(error);
+
+
+                statusText.innerText =
+                    "❌ Photo save error.";
+
+
+                capturing = false;
+
+            }
+
+
+        }, "image/jpeg", 0.90);
+
+    }
+
+
+
+    // =========================
+    // STOP CAMERA
+    // =========================
+
+    function stopCamera() {
+
+        if (stream) {
+
+
+            stream.getTracks().forEach(
+                track => track.stop()
+            );
+
+
+            stream = null;
+
+
+            video.srcObject = null;
+
+        }
+
+    }
+
+</script>
+
+
+</body>
+
+</html>
