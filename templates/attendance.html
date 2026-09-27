@@ -825,8 +825,8 @@
                         {{ record[1] }}
                     </td>
 
-                    <td>
-                        {{ record[2] }}
+                    <td data-date="{{ record[2] }}">
+                        {{ record[2].split('-')[2] }}-{{ record[2].split('-')[1] }}-{{ record[2].split('-')[0] }}
                     </td>
 
                     <td>
@@ -898,96 +898,76 @@
 
 <script>
 
-    function searchAttendance() {
+    /* ================= SEARCH + DATE FILTER ================= */
 
-        let input =
+    function filterAttendance() {
+
+        let searchInput =
             document
             .getElementById("searchInput")
             .value
             .toLowerCase()
             .trim();
 
+        let selectedDate =
+            document
+            .getElementById("dateFilter")
+            .value;
 
         let rows =
             document
             .getElementById("attendanceBody")
             .getElementsByTagName("tr");
 
-
         for (let i = 0; i < rows.length; i++) {
 
-            let text =
+            let cells =
+                rows[i].getElementsByTagName("td");
+
+            // Skip the "No attendance records" row.
+            if (cells.length < 5) {
+                continue;
+            }
+
+            let rowText =
                 rows[i]
                 .textContent
                 .toLowerCase();
 
+            let rowDate =
+                cells[2]
+                .getAttribute("data-date");
 
-            if (text.includes(input)) {
+            let matchesSearch =
+                searchInput === "" ||
+                rowText.includes(searchInput);
 
+            let matchesDate =
+                selectedDate === "" ||
+                rowDate === selectedDate;
+
+            if (matchesSearch && matchesDate) {
                 rows[i].style.display = "";
-
             } else {
-
                 rows[i].style.display = "none";
-
             }
-
         }
-
     }
 
 
-    /* ================= DATE FILTER ================= */
+    document
+        .getElementById("searchInput")
+        .addEventListener("input", filterAttendance);
+
 
     document
         .getElementById("dateFilter")
-        .addEventListener("change", function () {
-
-            let selectedDate = this.value;
-
-            let rows =
-                document
-                .getElementById("attendanceBody")
-                .getElementsByTagName("tr");
-
-
-            for (let i = 0; i < rows.length; i++) {
-
-                let cells =
-                    rows[i]
-                    .getElementsByTagName("td");
-
-
-                if (cells.length < 3) {
-                    continue;
-                }
-
-
-                let date =
-                    cells[2]
-                    .textContent
-                    .trim();
-
-
-                if (
-                    selectedDate === "" ||
-                    date === selectedDate
-                ) {
-
-                    rows[i].style.display = "";
-
-                } else {
-
-                    rows[i].style.display = "none";
-
-                }
-
-            }
-
-        });
+        .addEventListener("change", filterAttendance);
 
 
     /* ================= EXPORT DATE ================= */
+
+
 
     document
         .getElementById("exportBtn")
