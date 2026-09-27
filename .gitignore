@@ -1,0 +1,29 @@
+
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+env/
+.venv/
+
+# Database
+attendance.db
+*.db
+
+# Face Dataset
+dataset/
+
+# Trained Face Model
+trainer/
+
+# Environment Variables
+.env
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
