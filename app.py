@@ -12,7 +12,6 @@ from flask import (
 import os
 import csv
 import io
-import sqlite3
 from datetime import datetime
 
 import cv2
@@ -20,6 +19,11 @@ import numpy as np
 
 import database
 from face_capture import save_face_image
+
+try:
+    from supabase import create_client
+except ImportError:
+    create_client = None
 
 
 # =====================================================
@@ -62,6 +66,159 @@ CASCADE_PATH = os.path.join(
     "haarcascade_frontalface_default.xml"
 )
 
+# =====================================================
+# SUPABASE STORAGE
+# =====================================================
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get(
+    "SUPABASE_SERVICE_ROLE_KEY"
+)
+
+STORAGE_BUCKET = os.environ.get(
+    "SUPABASE_STORAGE_BUCKET",
+    "face-data"
+)
+
+supabase = None
+
+if create_client and SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY:
+    try:
+        supabase = create_client(
+            SUPABASE_URL,
+            SUPABASE_SERVICE_ROLE_KEY
+        )
+        print("Supabase Storage connection ready!")
+    except Exception as e:
+        print("Supabase Storage connection error:", e)
+
+
+def storage_upload_file(storage_path, file_bytes, content_type):
+    """
+    Upload a file to the private Supabase Storage bucket.
+    The service-role key stays server-side only.
+    """
+    if supabase is None:
+        return False
+
+    try:
+        supabase.storage.from_(STORAGE_BUCKET).upload(
+            storage_path,
+            file_bytes,
+            {
+                "content-type": content_type,
+                "upsert": "true"
+            }
+        )
+        return True
+
+    except Exception as e:
+        print("Storage upload error:", e)
+        return False
+
+
+def storage_download_file(storage_path):
+    """
+    Download a file from the private Supabase Storage bucket.
+    Returns bytes or None if unavailable.
+    """
+    if supabase is None:
+        return None
+
+    try:
+        return supabase.storage.from_(
+            STORAGE_BUCKET
+        ).download(storage_path)
+
+    except Exception as e:
+        print("Storage download error:", e)
+        return None
+
+
+def storage_file_exists(storage_path):
+    """
+    Check whether a file exists in private Storage.
+    """
+    data = storage_download_file(storage_path)
+    return data is not None and len(data) > 0
+
+
+def restore_trainer_from_storage():
+    """
+    Render's local filesystem is temporary.
+    Restore trainer.yml from Supabase Storage at startup.
+    """
+    if os.path.exists(TRAINER_FILE):
+        return True
+
+    trainer_bytes = storage_download_file(
+        "trainer/trainer.yml"
+    )
+
+    if not trainer_bytes:
+        print("No trainer.yml found in Supabase Storage.")
+        return False
+
+    try:
+        os.makedirs(
+            TRAINER_FOLDER,
+            exist_ok=True
+        )
+
+        with open(
+            TRAINER_FILE,
+            "wb"
+        ) as file:
+            file.write(trainer_bytes)
+
+        print(
+            "trainer.yml restored from Supabase Storage."
+        )
+        return True
+
+    except Exception as e:
+        print(
+            "Trainer restore error:",
+            e
+        )
+        return False
+
+
+def backup_trainer_to_storage():
+    """
+    If trainer.yml exists locally (for example after running
+    train.py on the developer machine), upload it to Storage.
+    """
+    if not os.path.exists(TRAINER_FILE):
+        return False
+
+    try:
+        with open(
+            TRAINER_FILE,
+            "rb"
+        ) as file:
+            trainer_bytes = file.read()
+
+        success = storage_upload_file(
+            "trainer/trainer.yml",
+            trainer_bytes,
+            "application/octet-stream"
+        )
+
+        if success:
+            print(
+                "trainer.yml uploaded to Supabase Storage."
+            )
+
+        return success
+
+    except Exception as e:
+        print(
+            "Trainer backup error:",
+            e
+        )
+        return False
+
 
 # =====================================================
 # CREATE REQUIRED FOLDERS
@@ -76,6 +233,11 @@ os.makedirs(
     TRAINER_FOLDER,
     exist_ok=True
 )
+
+
+# Restore persistent trainer from Supabase Storage when
+# running on Render or another fresh/ephemeral machine.
+restore_trainer_from_storage()
 
 
 # =====================================================
@@ -784,17 +946,35 @@ def save_face():
 
     # ---------------------------------------------
     # ONE PHOTO ONLY
+    # CHECK BOTH LOCAL CACHE AND SUPABASE
     # ---------------------------------------------
 
-    existing_photo = os.path.join(
-        DATASET_FOLDER,
+    filename = (
         f"User.{student_id}.1.jpg"
     )
 
+    existing_photo = os.path.join(
+        DATASET_FOLDER,
+        filename
+    )
 
-    if os.path.exists(
-        existing_photo
-    ):
+    storage_path = (
+        f"faces/{filename}"
+    )
+
+
+    if os.path.exists(existing_photo):
+
+        return jsonify({
+            "success": False,
+            "message": (
+                "Face photo already exists "
+                "for this Student ID."
+            )
+        })
+
+
+    if storage_file_exists(storage_path):
 
         return jsonify({
             "success": False,
@@ -814,6 +994,18 @@ def save_face():
         image_bytes = image.read()
 
 
+        if not image_bytes:
+
+            return jsonify({
+                "success": False,
+                "message": "Empty image."
+            }), 400
+
+
+        # -----------------------------------------
+        # KEEP EXISTING FACE VALIDATION/SAVE
+        # -----------------------------------------
+
         success, message = (
             save_face_image(
                 student_id,
@@ -830,6 +1022,53 @@ def save_face():
             })
 
 
+        # -----------------------------------------
+        # UPLOAD SAME ONE PHOTO TO SUPABASE
+        # -----------------------------------------
+
+        if supabase is None:
+
+            return jsonify({
+                "success": False,
+                "message": (
+                    "Supabase Storage is not configured."
+                )
+            }), 500
+
+
+        uploaded = storage_upload_file(
+            storage_path,
+            image_bytes,
+            "image/jpeg"
+        )
+
+
+        if not uploaded:
+
+            # Remove local photo if cloud upload failed,
+            # so the next attempt is not blocked.
+            if os.path.exists(existing_photo):
+
+                try:
+                    os.remove(existing_photo)
+                except Exception:
+                    pass
+
+            return jsonify({
+                "success": False,
+                "message": (
+                    "Face photo could not be uploaded "
+                    "to Supabase Storage."
+                )
+            }), 500
+
+
+        print(
+            "Face photo uploaded to Storage:",
+            storage_path
+        )
+
+
         return jsonify({
 
             "success": True,
@@ -839,7 +1078,9 @@ def save_face():
                 "successfully."
             ),
 
-            "filename": message
+            "filename": filename,
+
+            "storage_path": storage_path
 
         })
 
@@ -908,6 +1149,15 @@ def recognize_face():
             TRAINER_FILE
         ):
 
+            # Render may start with an empty filesystem.
+            # Try restoring trainer.yml from Supabase Storage.
+            restore_trainer_from_storage()
+
+
+        if not os.path.exists(
+            TRAINER_FILE
+        ):
+
             return jsonify({
 
                 "success": False,
@@ -916,7 +1166,8 @@ def recognize_face():
 
                 "message": (
                     "Trainer file not found. "
-                    "Please run train.py first."
+                    "Please run train.py and "
+                    "upload the trainer to Supabase Storage."
                 )
             })
 
@@ -1165,10 +1416,17 @@ def recognize_face():
         # LBPH:
         # lower confidence = better match
 
-        MAX_CONFIDENCE = 75
+        MAX_CONFIDENCE = 110
+        REQUIRED_MATCHES = 2
 
 
         if confidence > MAX_CONFIDENCE:
+
+            # A high LBPH confidence means a weak match.
+            # Reset the confirmation counter when the frame
+            # is outside the accepted range.
+            session.pop("recognition_candidate", None)
+            session.pop("recognition_count", None)
 
             return jsonify({
 
@@ -1176,10 +1434,57 @@ def recognize_face():
 
                 "recognized": False,
 
+                "confidence": round(float(confidence), 2),
+
                 "message": (
-                    "Face not recognized."
+                    "Face not recognized. "
+                    "Please move closer and look at the camera."
                 )
             })
+
+
+        # -----------------------------------------
+        # MULTI-FRAME CONFIRMATION
+        # -----------------------------------------
+
+        # Do not mark attendance from one unstable frame.
+        # The same student must be detected in two accepted
+        # consecutive requests.
+        previous_id = session.get("recognition_candidate")
+        previous_count = int(
+            session.get("recognition_count", 0)
+        )
+
+        if previous_id == str(student_id):
+            current_count = previous_count + 1
+        else:
+            current_count = 1
+
+        session["recognition_candidate"] = str(student_id)
+        session["recognition_count"] = current_count
+        session.modified = True
+
+        if current_count < REQUIRED_MATCHES:
+
+            return jsonify({
+
+                "success": True,
+
+                "recognized": False,
+
+                "student_id": str(student_id),
+
+                "confidence": round(float(confidence), 2),
+
+                "message": (
+                    "Face detected. Confirming identity..."
+                )
+            })
+
+
+        # Reset confirmation state before marking attendance.
+        session.pop("recognition_candidate", None)
+        session.pop("recognition_count", None)
 
 
         # -----------------------------------------
@@ -1395,6 +1700,57 @@ def export_attendance():
 
 
 # =====================================================
+# TRAINER STORAGE SYNC
+# =====================================================
+
+@app.route(
+    "/sync-trainer",
+    methods=["POST"]
+)
+def sync_trainer():
+
+    if not admin_required():
+
+        return jsonify({
+            "success": False,
+            "message": "Unauthorized"
+        }), 401
+
+
+    if not os.path.exists(
+        TRAINER_FILE
+    ):
+
+        return jsonify({
+            "success": False,
+            "message": (
+                "trainer.yml not found locally. "
+                "Run train.py first."
+            )
+        }), 404
+
+
+    if backup_trainer_to_storage():
+
+        return jsonify({
+            "success": True,
+            "message": (
+                "trainer.yml uploaded to "
+                "Supabase Storage successfully."
+            )
+        })
+
+
+    return jsonify({
+        "success": False,
+        "message": (
+            "trainer.yml could not be uploaded "
+            "to Supabase Storage."
+        )
+    }), 500
+
+
+# =====================================================
 # HEALTH CHECK
 # =====================================================
 
@@ -1440,6 +1796,9 @@ def internal_server_error(error):
 # =====================================================
 
 if __name__ == "__main__":
+
+    # If trainer.yml was generated locally, keep a cloud copy.
+    backup_trainer_to_storage()
 
     port = int(
         os.environ.get(
