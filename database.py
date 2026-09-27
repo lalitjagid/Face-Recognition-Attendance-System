@@ -1,192 +1,426 @@
-import sqlite3
-from datetime import datetime
 import os
+from datetime import datetime
 
-DB_PATH = "attendance.db"
-
-
-# -------------------------------------------------
-# DATABASE CONNECTION
-# -------------------------------------------------
-
-def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    return conn
+from supabase import create_client, Client
 
 
-# -------------------------------------------------
-# CREATE DATABASE / TABLES
-# -------------------------------------------------
+# =====================================================
+# SUPABASE CONNECTION
+# =====================================================
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get(
+    "SUPABASE_SERVICE_ROLE_KEY"
+)
+
+if not SUPABASE_URL:
+    raise RuntimeError("SUPABASE_URL environment variable is missing.")
+
+if not SUPABASE_SERVICE_ROLE_KEY:
+    raise RuntimeError(
+        "SUPABASE_SERVICE_ROLE_KEY environment variable is missing."
+    )
+
+supabase: Client = create_client(
+    SUPABASE_URL,
+    SUPABASE_SERVICE_ROLE_KEY
+)
+
+
+# =====================================================
+# CREATE / CHECK DATABASE
+# =====================================================
 
 def create_database():
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # Students table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS students (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id TEXT UNIQUE NOT NULL,
-            name TEXT NOT NULL,
-            roll_no TEXT NOT NULL,
-            course TEXT NOT NULL,
-            photo TEXT DEFAULT '',
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    # Attendance table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS attendance (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            date TEXT NOT NULL,
-            time TEXT NOT NULL,
-            status TEXT DEFAULT 'Present',
-            UNIQUE(student_id, date)
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-
-
-# -------------------------------------------------
-# ADD STUDENT
-# -------------------------------------------------
-
-def add_student(student_id, name, roll_no, course, photo=""):
-    conn = get_connection()
-    cursor = conn.cursor()
+    """
+    Supabase tables are created from the Supabase SQL Editor.
+    This function only checks that the required tables are reachable.
+    """
 
     try:
-        cursor.execute("""
-            INSERT INTO students
-            (student_id, name, roll_no, course, photo)
-            VALUES (?, ?, ?, ?, ?)
-        """, (student_id, name, roll_no, course, photo))
+        supabase.table("students").select(
+            "student_id"
+        ).limit(1).execute()
 
-        conn.commit()
-        return True
+        supabase.table("attendance").select(
+            "student_id"
+        ).limit(1).execute()
 
-    except sqlite3.IntegrityError:
-        return False
+        print("Supabase database connection ready!")
 
-    finally:
-        conn.close()
-
-
-# -------------------------------------------------
-# GET ALL STUDENTS
-# -------------------------------------------------
-
-def get_all_students():
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT student_id, name, roll_no, course, photo
-        FROM students
-        ORDER BY id DESC
-    """)
-
-    students = cursor.fetchall()
-
-    conn.close()
-
-    return students
+    except Exception as e:
+        print("Supabase database check failed:", e)
+        raise
 
 
-# -------------------------------------------------
+# =====================================================
+# ADD STUDENT
+# =====================================================
+
+def add_student(
+    student_id,
+    name,
+    roll_no,
+    course,
+    photo=""
+):
+
+    data = {
+        "student_id": str(student_id),
+        "name": name,
+        "roll_no": roll_no,
+        "course": course,
+        "photo": photo or ""
+    }
+
+    response = (
+        supabase
+        .table("students")
+        .insert(data)
+        .execute()
+    )
+
+    return response.data
+
+
+# =====================================================
 # GET ONE STUDENT
-# -------------------------------------------------
+# =====================================================
 
 def get_student(student_id):
-    conn = get_connection()
-    cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT student_id, name, roll_no, course, photo
-        FROM students
-        WHERE student_id = ?
-    """, (student_id,))
+    response = (
+        supabase
+        .table("students")
+        .select(
+            "student_id,name,roll_no,course"
+        )
+        .eq("student_id", str(student_id))
+        .limit(1)
+        .execute()
+    )
 
-    student = cursor.fetchone()
+    if not response.data:
+        return None
 
-    conn.close()
+    student = response.data[0]
 
-    return student
+    return (
+        student.get("student_id"),
+        student.get("name"),
+        student.get("roll_no"),
+        student.get("course")
+    )
 
 
-# -------------------------------------------------
-# GET TOTAL STUDENTS
-# -------------------------------------------------
+# =====================================================
+# GET ALL STUDENTS
+# =====================================================
+
+def get_all_students():
+
+    response = (
+        supabase
+        .table("students")
+        .select(
+            "student_id,name,roll_no,course"
+        )
+        .order("student_id")
+        .execute()
+    )
+
+    return [
+        (
+            row.get("student_id"),
+            row.get("name"),
+            row.get("roll_no"),
+            row.get("course")
+        )
+        for row in (response.data or [])
+    ]
+
+
+# =====================================================
+# UPDATE STUDENT
+# =====================================================
+
+def update_student(
+    student_id,
+    name,
+    roll_no,
+    course
+):
+
+    response = (
+        supabase
+        .table("students")
+        .update({
+            "name": name,
+            "roll_no": roll_no,
+            "course": course
+        })
+        .eq("student_id", str(student_id))
+        .execute()
+    )
+
+    return response.data
+
+
+# =====================================================
+# DELETE STUDENT
+# =====================================================
+
+def delete_student(student_id):
+
+    student_id = str(student_id)
+
+    # Delete attendance first
+    supabase.table("attendance").delete().eq(
+        "student_id",
+        student_id
+    ).execute()
+
+    # Delete student
+    response = (
+        supabase
+        .table("students")
+        .delete()
+        .eq("student_id", student_id)
+        .execute()
+    )
+
+    return response.data
+
+
+# =====================================================
+# STUDENT ATTENDANCE
+# =====================================================
+
+def get_student_attendance(student_id):
+
+    response = (
+        supabase
+        .table("attendance")
+        .select(
+            "student_id,name,date,time,status"
+        )
+        .eq("student_id", str(student_id))
+        .order("date", desc=True)
+        .order("time", desc=True)
+        .execute()
+    )
+
+    return [
+        (
+            row.get("student_id"),
+            row.get("name"),
+            row.get("date"),
+            row.get("time"),
+            row.get("status")
+        )
+        for row in (response.data or [])
+    ]
+
+
+# =====================================================
+# STUDENT ATTENDANCE %
+# =====================================================
+
+def get_student_attendance_percentage(student_id):
+
+    student_id = str(student_id)
+
+    # Get all distinct attendance dates
+    all_attendance = (
+        supabase
+        .table("attendance")
+        .select("date")
+        .execute()
+    )
+
+    dates = {
+        row.get("date")
+        for row in (all_attendance.data or [])
+        if row.get("date")
+    }
+
+    total_days = len(dates)
+
+    if total_days == 0:
+        return 0
+
+    # Get student's present attendance
+    present_response = (
+        supabase
+        .table("attendance")
+        .select("id", count="exact")
+        .eq("student_id", student_id)
+        .eq("status", "Present")
+        .execute()
+    )
+
+    present_days = present_response.count or 0
+
+    percentage = (
+        present_days / total_days
+    ) * 100
+
+    return round(percentage, 2)
+
+
+# =====================================================
+# MARK ATTENDANCE
+# =====================================================
+
+def mark_attendance(student_id, name):
+
+    student_id = str(student_id)
+
+    now = datetime.now()
+
+    date = now.strftime("%Y-%m-%d")
+    time = now.strftime("%H:%M:%S")
+
+    # Do not mark the same student twice on the same date.
+    existing = (
+        supabase
+        .table("attendance")
+        .select("id")
+        .eq("student_id", student_id)
+        .eq("date", date)
+        .limit(1)
+        .execute()
+    )
+
+    if existing.data:
+        return False
+
+    data = {
+        "student_id": student_id,
+        "name": name,
+        "date": date,
+        "time": time,
+        "status": "Present"
+    }
+
+    try:
+        (
+            supabase
+            .table("attendance")
+            .insert(data)
+            .execute()
+        )
+
+        return True
+
+    except Exception as e:
+
+        # The database also has UNIQUE(student_id, date),
+        # so concurrent duplicate requests are safely rejected.
+        error_text = str(e).lower()
+
+        if (
+            "duplicate" in error_text
+            or "unique" in error_text
+        ):
+            return False
+
+        raise
+
+
+# =====================================================
+# SAVE ATTENDANCE
+# =====================================================
+
+def save_attendance(student_id, name):
+    return mark_attendance(student_id, name)
+
+
+# =====================================================
+# ALL ATTENDANCE
+# =====================================================
+
+def get_all_attendance():
+
+    response = (
+        supabase
+        .table("attendance")
+        .select(
+            "student_id,name,date,time,status"
+        )
+        .order("date", desc=True)
+        .order("time", desc=True)
+        .execute()
+    )
+
+    return [
+        (
+            row.get("student_id"),
+            row.get("name"),
+            row.get("date"),
+            row.get("time"),
+            row.get("status")
+        )
+        for row in (response.data or [])
+    ]
+
+
+# =====================================================
+# TOTAL STUDENTS
+# =====================================================
 
 def get_total_students():
-    conn = get_connection()
-    cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM students
-    """)
+    response = (
+        supabase
+        .table("students")
+        .select("id", count="exact")
+        .execute()
+    )
 
-    total = cursor.fetchone()[0]
-
-    conn.close()
-
-    return total
+    return response.count or 0
 
 
-# -------------------------------------------------
-# GET TODAY'S PRESENT STUDENTS
-# -------------------------------------------------
+# =====================================================
+# PRESENT TODAY
+# =====================================================
 
 def get_present_today():
+
     today = datetime.now().strftime("%Y-%m-%d")
 
-    conn = get_connection()
-    cursor = conn.cursor()
+    response = (
+        supabase
+        .table("attendance")
+        .select("id", count="exact")
+        .eq("date", today)
+        .eq("status", "Present")
+        .execute()
+    )
 
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM attendance
-        WHERE date = ?
-        AND status = 'Present'
-    """, (today,))
-
-    total = cursor.fetchone()[0]
-
-    conn.close()
-
-    return total
+    return response.count or 0
 
 
-# -------------------------------------------------
-# GET TOTAL ATTENDANCE
-# -------------------------------------------------
+# =====================================================
+# TOTAL ATTENDANCE
+# =====================================================
 
 def get_total_attendance():
-    conn = get_connection()
-    cursor = conn.cursor()
 
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM attendance
-        WHERE status = 'Present'
-    """)
+    response = (
+        supabase
+        .table("attendance")
+        .select("id", count="exact")
+        .eq("status", "Present")
+        .execute()
+    )
 
-    total = cursor.fetchone()[0]
-
-    conn.close()
-
-    return total
+    return response.count or 0
 
 
-# -------------------------------------------------
-# OVERALL ATTENDANCE PERCENTAGE
-# -------------------------------------------------
+# =====================================================
+# OVERALL ATTENDANCE %
+# =====================================================
 
 def get_attendance_percentage():
 
@@ -195,263 +429,70 @@ def get_attendance_percentage():
     if total_students == 0:
         return 0
 
-    conn = get_connection()
-    cursor = conn.cursor()
+    # Get all distinct attendance dates
+    all_attendance = (
+        supabase
+        .table("attendance")
+        .select("date")
+        .execute()
+    )
 
-    # Total attendance days
-    cursor.execute("""
-        SELECT COUNT(DISTINCT date)
-        FROM attendance
-    """)
+    dates = {
+        row.get("date")
+        for row in (all_attendance.data or [])
+        if row.get("date")
+    }
 
-    total_days = cursor.fetchone()[0]
+    total_days = len(dates)
 
     if total_days == 0:
-        conn.close()
         return 0
 
-    # Maximum possible attendance
-    maximum_attendance = total_students * total_days
+    total_possible_attendance = (
+        total_students * total_days
+    )
 
-    # Actual attendance
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM attendance
-        WHERE status = 'Present'
-    """)
+    total_present = get_total_attendance()
 
-    actual_attendance = cursor.fetchone()[0]
-
-    conn.close()
-
-    percentage = (actual_attendance / maximum_attendance) * 100
+    percentage = (
+        total_present / total_possible_attendance
+    ) * 100
 
     return round(percentage, 2)
 
 
-# -------------------------------------------------
-# STUDENT ATTENDANCE PERCENTAGE
-# -------------------------------------------------
-
-def get_student_attendance_percentage(student_id):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    # Total attendance days
-    cursor.execute("""
-        SELECT COUNT(DISTINCT date)
-        FROM attendance
-    """)
-
-    total_days = cursor.fetchone()[0]
-
-    if total_days == 0:
-        conn.close()
-        return 0
-
-    # Student's present days
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM attendance
-        WHERE student_id = ?
-        AND status = 'Present'
-    """, (student_id,))
-
-    present_days = cursor.fetchone()[0]
-
-    conn.close()
-
-    percentage = (present_days / total_days) * 100
-
-    return round(percentage, 2)
-
-
-# -------------------------------------------------
-# SAVE ATTENDANCE
-# -------------------------------------------------
-
-def save_attendance(student_id, name):
-
-    today = datetime.now().strftime("%Y-%m-%d")
-    current_time = datetime.now().strftime("%H:%M:%S")
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    try:
-
-        cursor.execute("""
-            INSERT INTO attendance
-            (student_id, name, date, time, status)
-            VALUES (?, ?, ?, ?, ?)
-        """, (
-            student_id,
-            name,
-            today,
-            current_time,
-            "Present"
-        ))
-
-        conn.commit()
-
-        return True
-
-    except sqlite3.IntegrityError:
-
-        # Already marked present today
-        return False
-
-    finally:
-        conn.close()
-
-
-# -------------------------------------------------
-# GET ALL ATTENDANCE
-# -------------------------------------------------
-
-def get_all_attendance():
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT
-            student_id,
-            name,
-            date,
-            time,
-            status
-        FROM attendance
-        ORDER BY date DESC, time DESC
-    """)
-
-    attendance = cursor.fetchall()
-
-    conn.close()
-
-    return attendance
-
-
-# -------------------------------------------------
-# GET STUDENT ATTENDANCE
-# -------------------------------------------------
-
-def get_student_attendance(student_id):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT
-            student_id,
-            name,
-            date,
-            time,
-            status
-        FROM attendance
-        WHERE student_id = ?
-        ORDER BY date DESC, time DESC
-    """, (student_id,))
-
-    attendance = cursor.fetchall()
-
-    conn.close()
-
-    return attendance
-
-
-# -------------------------------------------------
-# UPDATE STUDENT
-# -------------------------------------------------
-
-def update_student(student_id, name, roll_no, course):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        UPDATE students
-        SET
-            name = ?,
-            roll_no = ?,
-            course = ?
-        WHERE student_id = ?
-    """, (
-        name,
-        roll_no,
-        course,
-        student_id
-    ))
-
-    conn.commit()
-
-    updated = cursor.rowcount > 0
-
-    conn.close()
-
-    return updated
-
-
-# -------------------------------------------------
-# DELETE STUDENT
-# -------------------------------------------------
-
-def delete_student(student_id):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    try:
-
-        # Delete student's attendance first
-        cursor.execute("""
-            DELETE FROM attendance
-            WHERE student_id = ?
-        """, (student_id,))
-
-        # Delete student
-        cursor.execute("""
-            DELETE FROM students
-            WHERE student_id = ?
-        """, (student_id,))
-
-        conn.commit()
-
-        deleted = cursor.rowcount > 0
-
-        return deleted
-
-    finally:
-        conn.close()
-
-
-# -------------------------------------------------
-# UPDATE STUDENT PHOTO
-# -------------------------------------------------
-
-def update_student_photo(student_id, photo):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        UPDATE students
-        SET photo = ?
-        WHERE student_id = ?
-    """, (photo, student_id))
-
-    conn.commit()
-
-    updated = cursor.rowcount > 0
-
-    conn.close()
-
-    return updated
-
-
-# -------------------------------------------------
-# INITIALIZE DATABASE
-# -------------------------------------------------
-
-create_database()
+# =====================================================
+# ATTENDANCE BY DATE
+# =====================================================
+
+def get_attendance_by_date(date):
+
+    response = (
+        supabase
+        .table("attendance")
+        .select(
+            "student_id,name,date,time,status"
+        )
+        .eq("date", date)
+        .order("time", desc=True)
+        .execute()
+    )
+
+    return [
+        (
+            row.get("student_id"),
+            row.get("name"),
+            row.get("date"),
+            row.get("time"),
+            row.get("status")
+        )
+        for row in (response.data or [])
+    ]
+
+
+# =====================================================
+# START / CHECK DATABASE
+# =====================================================
+
+if __name__ == "__main__":
+    create_database()
