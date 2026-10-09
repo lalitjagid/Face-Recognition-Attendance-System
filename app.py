@@ -269,7 +269,30 @@ def home():
     return render_template(
         "index.html"
     )
+   @app.route("/")
+def home():
+    return render_template("index.html")
 
+
+# =====================================================
+# SITEMAP FOR GOOGLE SEARCH
+# =====================================================
+
+@app.route("/sitemap.xml")
+def sitemap():
+    pages = [
+        url_for("home", _external=True)
+    ]
+
+    xml = render_template(
+        "sitemap.xml",
+        pages=pages
+    )
+
+    return Response(
+        xml,
+        mimetype="application/xml"
+    )
 
 # =====================================================
 # LOGIN
