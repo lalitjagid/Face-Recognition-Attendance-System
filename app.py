@@ -275,21 +275,15 @@ def home():
 
 @app.route("/sitemap.xml")
 def sitemap():
-    pages = [
-        url_for("home", _external=True)
-    ]
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://face-recognition-attendance-system-vnsj.onrender.com/</loc>
+    </url>
+</urlset>"""
 
-    xml = render_template(
-        "sitemap.xml",
-        pages=pages
-    )
-
-    return Response(
-        xml,
-        mimetype="application/xml"
-    )
-
-
+    return Response(xml, mimetype="application/xml")
+    
 
 
 # =====================================================
